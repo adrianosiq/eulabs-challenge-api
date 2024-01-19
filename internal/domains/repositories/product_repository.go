@@ -21,3 +21,11 @@ func (r *ProductRepository) GetAll() ([]*models.Product, error) {
 	}
 	return products, nil
 }
+
+func (r *ProductRepository) Create(product *models.Product) (*models.Product, error) {
+	err := r.db.Create(&product).Error
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}

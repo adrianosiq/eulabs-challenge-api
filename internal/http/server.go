@@ -55,5 +55,8 @@ func (s *Server) RouteInit(address string) {
 
 func (s *Server) routeConfig() {
 	api := s.echo.Group("/api/v1")
-	api.GET("/products", s.productHandler.Index)
+
+	products := api.Group("/products")
+	products.GET("", s.productHandler.Index)
+	products.POST("", s.productHandler.Create)
 }

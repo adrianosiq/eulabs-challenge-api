@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/adrianosiqe/eulabs-challenge-api/internal/domains/models"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -39,7 +40,8 @@ func TestGetAll(t *testing.T) {
 			{2, "Charmander", "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.", 1093.45, time.Now(), time.Now(), nil},
 		}
 		rows := sqlmock.NewRows([]string{"id", "title", "description", "price", "created_at", "updated_at", "deleted_at"}).AddRows(values...)
-		mock.ExpectQuery(`SELECT`).WillReturnRows(rows)
+		expectedSQL := "SELECT (.+) FROM `products` WHERE `products`.`deleted_at` IS NULL"
+		mock.ExpectQuery(expectedSQL).WillReturnRows(rows)
 
 		productRepository := NewProductRepository(db)
 		products, err := productRepository.GetAll()
@@ -51,7 +53,8 @@ func TestGetAll(t *testing.T) {
 	t.Run("should return an empty list", func(t *testing.T) {
 		db, mock := NewMockDB()
 		rows := sqlmock.NewRows([]string{"id", "title", "description", "price", "created_at", "updated_at", "deleted_at"})
-		mock.ExpectQuery(`SELECT`).WillReturnRows(rows)
+		expectedSQL := "SELECT (.+) FROM `products` WHERE `products`.`deleted_at` IS NULL"
+		mock.ExpectQuery(expectedSQL).WillReturnRows(rows)
 
 		productRepository := NewProductRepository(db)
 		products, err := productRepository.GetAll()
@@ -62,10 +65,49 @@ func TestGetAll(t *testing.T) {
 
 	t.Run("should return an error", func(t *testing.T) {
 		db, mock := NewMockDB()
-		mock.ExpectQuery(`SELECT`).WillReturnError(fmt.Errorf("some error"))
+		expectedSQL := "SELECT (.+) FROM `products` WHERE `products`.`deleted_at` IS NULL"
+		mock.ExpectQuery(expectedSQL).WillReturnError(fmt.Errorf("some error"))
 
 		productRepository := NewProductRepository(db)
 		_, err := productRepository.GetAll()
+
+		assert.Error(t, err)
+	})
+}
+
+func TestCreate(t *testing.T) {
+	var mockCreateProduct = &models.Product{
+		Title:       "Charmander",
+		Description: "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.",
+		Price:       1093.45,
+	}
+
+	t.Run("should return an product", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "INSERT INTO `products` (.+) VALUES (.+)"
+		mock.ExpectBegin()
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		productRepository := NewProductRepository(db)
+		product, err := productRepository.Create(mockCreateProduct)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(1), product.ID)
+		assert.Equal(t, "Charmander", product.Title)
+		assert.Contains(t, product.Description, "It has a preference")
+		assert.Equal(t, 1093.45, product.Price)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "INSERT INTO `products` (.+) VALUES (.+)"
+		mock.ExpectBegin()
+		mock.ExpectExec(expectedSQL).WillReturnError(fmt.Errorf("some error"))
+		mock.ExpectCommit()
+
+		productRepository := NewProductRepository(db)
+		_, err := productRepository.Create(mockCreateProduct)
 
 		assert.Error(t, err)
 	})

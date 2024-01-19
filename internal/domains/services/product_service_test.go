@@ -16,7 +16,18 @@ type MockProductRepository struct {
 
 func (m *MockProductRepository) GetAll() ([]*models.Product, error) {
 	args := m.Called()
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]*models.Product), args.Error(1)
+}
+
+func (m *MockProductRepository) Create(product *models.Product) (*models.Product, error) {
+	args := m.Called(product)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Product), args.Error(1)
 }
 
 var MockProducts = []*models.Product{
@@ -63,12 +74,39 @@ func TestGetAllProducts(t *testing.T) {
 	})
 
 	t.Run("should return an error", func(t *testing.T) {
-		var mockEmptyProducts []*models.Product
 		mockProductRepository := &MockProductRepository{}
-		mockProductRepository.On("GetAll").Return(mockEmptyProducts, fmt.Errorf("some error"))
+		mockProductRepository.On("GetAll").Return(nil, fmt.Errorf("some error"))
 
 		productService := NewProductService(mockProductRepository)
 		_, err := productService.GetAllProducts()
+
+		assert.Error(t, err)
+	})
+}
+
+func TestCreateProducts(t *testing.T) {
+	var mockCreateProduct = models.Product{Title: MockProducts[0].Title, Description: MockProducts[0].Description, Price: MockProducts[0].Price}
+
+	t.Run("should return an product", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("Create", &mockCreateProduct).Return(MockProducts[0], nil)
+
+		productService := NewProductService(mockProductRepository)
+		product, err := productService.CreateProduct(&mockCreateProduct)
+
+		assert.NoError(t, err)
+		assert.Equal(t, MockProducts[0].ID, product.ID)
+		assert.Equal(t, MockProducts[0].Title, product.Title)
+		assert.Equal(t, MockProducts[0].Description, product.Description)
+		assert.Equal(t, MockProducts[0].Price, product.Price)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("Create", &mockCreateProduct).Return(nil, fmt.Errorf("some error"))
+
+		productService := NewProductService(mockProductRepository)
+		_, err := productService.CreateProduct(&mockCreateProduct)
 
 		assert.Error(t, err)
 	})
