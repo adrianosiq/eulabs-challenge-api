@@ -29,3 +29,12 @@ func (r *ProductRepository) Create(product *models.Product) (*models.Product, er
 	}
 	return product, nil
 }
+
+func (r *ProductRepository) GetByID(id int) (*models.Product, error) {
+	var product models.Product
+	err := r.db.First(&product, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
+}
