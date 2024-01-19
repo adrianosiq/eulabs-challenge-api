@@ -16,3 +16,7 @@ func NewProductService(productRepository interfaces.ProductRespositoryInterface)
 func (s *ProductService) GetAllProducts() ([]*models.Product, error) {
 	return s.productRepository.GetAll()
 }
+
+func (s *ProductService) CreateProduct(product *models.Product) (*models.Product, error) {
+	return s.productRepository.Create(product)
+}
