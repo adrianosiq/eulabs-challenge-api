@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -20,6 +21,11 @@ type MockProductService struct {
 func (m *MockProductService) GetAllProducts() ([]*models.Product, error) {
 	args := m.Called()
 	return args.Get(0).([]*models.Product), args.Error(1)
+}
+
+func (m *MockProductService) CreateProduct(product *models.Product) (*models.Product, error) {
+	args := m.Called(product)
+	return args.Get(0).(*models.Product), args.Error(1)
 }
 
 var MockProducts = []*models.Product{
@@ -41,8 +47,8 @@ var MockProducts = []*models.Product{
 	},
 }
 
-func TestGetAllProducts(t *testing.T) {
-	t.Run("should return a list the products", func(t *testing.T) {
+func TestIndex(t *testing.T) {
+	t.Run("should returns 200", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/", nil)
 		rec := httptest.NewRecorder()
@@ -50,7 +56,7 @@ func TestGetAllProducts(t *testing.T) {
 		c.SetPath("/products")
 
 		mockProductService := &MockProductService{}
-		mockProductService.On("GetAllProducts").Return(MockProducts, nil)
+		mockProductService.On("GetAllProducts").Return(MockProducts, nil).Once()
 		productHandler := NewProductHandler(mockProductService)
 
 		if assert.NoError(t, productHandler.Index(c)) {
@@ -68,6 +74,37 @@ func TestGetAllProducts(t *testing.T) {
 			assert.Equal(t, "Charmander", products[1].Title)
 			assert.Contains(t, products[1].Description, "It has a preference for hot")
 			assert.Equal(t, 1093.45, products[1].Price)
+		}
+	})
+}
+
+func TestCreate(t *testing.T) {
+	var productJSON = `{"title":"Charmander","description":"It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.", "price": 1093.45}`
+
+	t.Run("should returns 201", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/", strings.NewReader(productJSON))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/products")
+
+		var productBind models.Product
+		json.Unmarshal([]byte(productJSON), &productBind)
+		mockProductService := &MockProductService{}
+		mockProductService.On("CreateProduct", &productBind).Return(MockProducts[1], nil)
+		productHandler := NewProductHandler(mockProductService)
+
+		if assert.NoError(t, productHandler.Create(c)) {
+			assert.Equal(t, http.StatusCreated, rec.Code)
+
+			var product models.Product
+			json.Unmarshal(rec.Body.Bytes(), &product)
+
+			assert.Equal(t, uint(2), product.ID)
+			assert.Equal(t, "Charmander", product.Title)
+			assert.Contains(t, product.Description, "It has a preference")
+			assert.Equal(t, 1093.45, product.Price)
 		}
 	})
 }

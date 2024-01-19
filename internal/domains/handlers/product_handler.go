@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/adrianosiqe/eulabs-challenge-api/internal/core/interfaces"
+	"github.com/adrianosiqe/eulabs-challenge-api/internal/domains/models"
 	"github.com/labstack/echo"
 )
 
@@ -28,4 +29,20 @@ func (h *ProductHandler) Index(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, products)
+}
+
+func (h *ProductHandler) Create(c echo.Context) error {
+	var product models.Product
+
+	err := c.Bind(&product)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to decode user data")
+	}
+
+	createdProduct, err := h.productService.CreateProduct(&product)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
+	}
+
+	return c.JSON(http.StatusCreated, createdProduct)
 }
