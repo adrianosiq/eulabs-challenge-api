@@ -24,3 +24,7 @@ func (s *ProductService) CreateProduct(product *models.Product) (*models.Product
 func (s *ProductService) GetProductByID(id int) (*models.Product, error) {
 	return s.productRepository.GetByID(id)
 }
+
+func (s *ProductService) DeleteProduct(id int) error {
+	return s.productRepository.Delete(id)
+}
