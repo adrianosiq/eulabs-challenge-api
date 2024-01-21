@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/adrianosiqe/eulabs-challenge-api/internal/core/interfaces"
 	"github.com/adrianosiqe/eulabs-challenge-api/internal/domains/models"
@@ -36,13 +37,32 @@ func (h *ProductHandler) Create(c echo.Context) error {
 
 	err := c.Bind(&product)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to decode user data")
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to decode product data")
 	}
 
 	createdProduct, err := h.productService.CreateProduct(&product)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create product")
 	}
 
 	return c.JSON(http.StatusCreated, createdProduct)
+}
+
+func (h *ProductHandler) Show(c echo.Context) error {
+	idParam := c.Param("id")
+	if idParam == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing product ID")
+	}
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid product ID")
+	}
+
+	product, err := h.productService.GetProductByID(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get product")
+	}
+
+	return c.JSON(http.StatusOK, product)
 }

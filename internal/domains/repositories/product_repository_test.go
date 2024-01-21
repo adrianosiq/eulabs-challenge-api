@@ -112,3 +112,33 @@ func TestCreate(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestGetByID(t *testing.T) {
+	t.Run("should return the product", func(t *testing.T) {
+		db, mock := NewMockDB()
+		row := sqlmock.NewRows([]string{"id", "title", "description", "price", "created_at", "updated_at", "deleted_at"}).
+			AddRow(1, "Bulbasaur", "There is a plant seed on its back right from the day this Pokémon is born. The seed slowly grows larger.", 99.99, time.Now(), time.Now(), nil)
+		expectedSQL := "SELECT (.+) FROM `products` WHERE `products`.`id` = (.+) AND `products`.`deleted_at` IS NULL"
+		mock.ExpectQuery(expectedSQL).WillReturnRows(row)
+
+		productRepository := NewProductRepository(db)
+		product, err := productRepository.GetByID(1)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(1), product.ID)
+		assert.Equal(t, "Bulbasaur", product.Title)
+		assert.Contains(t, product.Description, "There is a plant seed")
+		assert.Equal(t, 99.99, product.Price)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "SELECT (.+) FROM `products` WHERE `products`.`id` = (.+) AND `products`.`deleted_at` IS NULL"
+		mock.ExpectQuery(expectedSQL).WillReturnError(fmt.Errorf("some error"))
+
+		productRepository := NewProductRepository(db)
+		_, err := productRepository.GetByID(1)
+
+		assert.Error(t, err)
+	})
+}

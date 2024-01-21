@@ -28,6 +28,11 @@ func (m *MockProductService) CreateProduct(product *models.Product) (*models.Pro
 	return args.Get(0).(*models.Product), args.Error(1)
 }
 
+func (m *MockProductService) GetProductByID(id int) (*models.Product, error) {
+	args := m.Called(id)
+	return args.Get(0).(*models.Product), args.Error(1)
+}
+
 var MockProducts = []*models.Product{
 	{
 		ID:          1,
@@ -105,6 +110,34 @@ func TestCreate(t *testing.T) {
 			assert.Equal(t, "Charmander", product.Title)
 			assert.Contains(t, product.Description, "It has a preference")
 			assert.Equal(t, 1093.45, product.Price)
+		}
+	})
+}
+
+func TestShow(t *testing.T) {
+	t.Run("should returns 200", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/products/:id")
+		c.SetParamNames("id")
+		c.SetParamValues("1")
+
+		mockProductService := &MockProductService{}
+		mockProductService.On("GetProductByID", 1).Return(MockProducts[0], nil).Once()
+		productHandler := NewProductHandler(mockProductService)
+
+		if assert.NoError(t, productHandler.Show(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			var product models.Product
+			json.Unmarshal(rec.Body.Bytes(), &product)
+
+			assert.Equal(t, uint(1), product.ID)
+			assert.Equal(t, "Bulbasaur", product.Title)
+			assert.Contains(t, product.Description, "There is a plant seed")
+			assert.Equal(t, 99.99, product.Price)
 		}
 	})
 }
