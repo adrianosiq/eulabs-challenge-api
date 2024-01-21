@@ -30,6 +30,14 @@ func (m *MockProductRepository) Create(product *models.Product) (*models.Product
 	return args.Get(0).(*models.Product), args.Error(1)
 }
 
+func (m *MockProductRepository) GetByID(id int) (*models.Product, error) {
+	args := m.Called(id)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Product), args.Error(1)
+}
+
 var MockProducts = []*models.Product{
 	{
 		ID:          1,
@@ -107,6 +115,32 @@ func TestCreateProducts(t *testing.T) {
 
 		productService := NewProductService(mockProductRepository)
 		_, err := productService.CreateProduct(&mockCreateProduct)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestGetProductByID(t *testing.T) {
+	t.Run("should return the products", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("GetByID", 1).Return(MockProducts[0], nil)
+
+		productService := NewProductService(mockProductRepository)
+		product, err := productService.GetProductByID(1)
+
+		assert.NoError(t, err)
+		assert.Equal(t, MockProducts[0].ID, product.ID)
+		assert.Equal(t, MockProducts[0].Title, product.Title)
+		assert.Equal(t, MockProducts[0].Description, product.Description)
+		assert.Equal(t, MockProducts[0].Price, product.Price)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("GetByID", 1).Return(nil, fmt.Errorf("some error"))
+
+		productService := NewProductService(mockProductRepository)
+		_, err := productService.GetProductByID(1)
 
 		assert.Error(t, err)
 	})
