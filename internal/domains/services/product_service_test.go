@@ -38,6 +38,11 @@ func (m *MockProductRepository) GetByID(id int) (*models.Product, error) {
 	return args.Get(0).(*models.Product), args.Error(1)
 }
 
+func (m *MockProductRepository) Delete(id int) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 var MockProducts = []*models.Product{
 	{
 		ID:          1,
@@ -141,6 +146,28 @@ func TestGetProductByID(t *testing.T) {
 
 		productService := NewProductService(mockProductRepository)
 		_, err := productService.GetProductByID(1)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestDelete(t *testing.T) {
+	t.Run("should return nil", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("Delete", 1).Return(nil)
+
+		productService := NewProductService(mockProductRepository)
+		err := productService.DeleteProduct(1)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("Delete", 1).Return(fmt.Errorf("some error"))
+
+		productService := NewProductService(mockProductRepository)
+		err := productService.DeleteProduct(1)
 
 		assert.Error(t, err)
 	})
