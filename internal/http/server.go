@@ -59,4 +59,5 @@ func (s *Server) routeConfig() {
 	products := api.Group("/products")
 	products.GET("", s.productHandler.Index)
 	products.POST("", s.productHandler.Create)
+	products.GET("/:id", s.productHandler.Show)
 }
