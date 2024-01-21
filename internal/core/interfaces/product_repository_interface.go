@@ -6,4 +6,5 @@ type ProductRespositoryInterface interface {
 	GetAll() ([]*models.Product, error)
 	Create(product *models.Product) (*models.Product, error)
 	GetByID(id int) (*models.Product, error)
+	Delete(id int) error
 }

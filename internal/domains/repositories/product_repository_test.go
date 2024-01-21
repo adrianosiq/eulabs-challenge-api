@@ -142,3 +142,32 @@ func TestGetByID(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestDelete(t *testing.T) {
+	t.Run("should return nil", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "UPDATE `products` (.+) WHERE id = (.+) AND `products`.`deleted_at` IS NULL"
+		mock.ExpectBegin()
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		productRepository := NewProductRepository(db)
+		err := productRepository.Delete(1)
+
+		assert.Nil(t, err)
+		assert.Nil(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "UPDATE `products` (.+) WHERE id = (.+) AND `products`.`deleted_at` IS NULL"
+		mock.ExpectBegin()
+		mock.ExpectExec(expectedSQL).WillReturnError(fmt.Errorf("some error"))
+		mock.ExpectCommit()
+
+		productRepository := NewProductRepository(db)
+		err := productRepository.Delete(1)
+
+		assert.Error(t, err)
+	})
+}
