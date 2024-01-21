@@ -66,3 +66,22 @@ func (h *ProductHandler) Show(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, product)
 }
+
+func (h *ProductHandler) Delete(c echo.Context) error {
+	idParam := c.Param("id")
+	if idParam == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing product ID")
+	}
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid product ID")
+	}
+
+	err = h.productService.DeleteProduct(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete product")
+	}
+
+	return c.JSON(http.StatusNoContent, nil)
+}

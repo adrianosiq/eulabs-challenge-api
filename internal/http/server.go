@@ -60,4 +60,5 @@ func (s *Server) routeConfig() {
 	products.GET("", s.productHandler.Index)
 	products.POST("", s.productHandler.Create)
 	products.GET("/:id", s.productHandler.Show)
+	products.DELETE("/:id", s.productHandler.Delete)
 }

@@ -33,6 +33,11 @@ func (m *MockProductService) GetProductByID(id int) (*models.Product, error) {
 	return args.Get(0).(*models.Product), args.Error(1)
 }
 
+func (m *MockProductService) DeleteProduct(id int) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 var MockProducts = []*models.Product{
 	{
 		ID:          1,
@@ -138,6 +143,26 @@ func TestShow(t *testing.T) {
 			assert.Equal(t, "Bulbasaur", product.Title)
 			assert.Contains(t, product.Description, "There is a plant seed")
 			assert.Equal(t, 99.99, product.Price)
+		}
+	})
+}
+
+func TestDelete(t *testing.T) {
+	t.Run("should returns 204", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodDelete, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/products/:id")
+		c.SetParamNames("id")
+		c.SetParamValues("1")
+
+		mockProductService := &MockProductService{}
+		mockProductService.On("DeleteProduct", 1).Return(nil).Once()
+		productHandler := NewProductHandler(mockProductService)
+
+		if assert.NoError(t, productHandler.Delete(c)) {
+			assert.Equal(t, http.StatusNoContent, rec.Code)
 		}
 	})
 }
