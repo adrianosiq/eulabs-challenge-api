@@ -13,12 +13,6 @@ type ProductHandler struct {
 	productService interfaces.ProductServiceInterface
 }
 
-type ProductInput struct {
-	Title       string  `json:"title" validate:"required"`
-	Description string  `json:"description" validate:"required"`
-	Price       float64 `json:"price" validate:"required"`
-}
-
 func NewProductHandler(productService interfaces.ProductServiceInterface) *ProductHandler {
 	return &ProductHandler{productService: productService}
 }
