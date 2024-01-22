@@ -8,6 +8,7 @@ import (
 	"github.com/adrianosiqe/eulabs-challenge-api/internal/core/utils"
 	"github.com/adrianosiqe/eulabs-challenge-api/internal/domains/handlers"
 	"github.com/adrianosiqe/eulabs-challenge-api/internal/domains/services"
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -17,8 +18,20 @@ type Server struct {
 	productHandler *handlers.ProductHandler
 }
 
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	if err := cv.validator.Struct(i); err != nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
+	}
+	return nil
+}
+
 func NewServer(productRepository interfaces.ProductRespositoryInterface) *Server {
 	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
 
 	loggerConfig := middleware.LoggerConfig{
 		Format:           "URI::${uri}\n, METHOD::${method},  STATUS::${status}, HEADER::${header}\n, QUERY::${query}\n, ERROR::${error}\n",
