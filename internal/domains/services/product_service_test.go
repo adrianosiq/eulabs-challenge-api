@@ -27,6 +27,7 @@ func TestGetAllProducts(t *testing.T) {
 		assert.Equal(t, mocks.MockProducts[1].Title, products[1].Title)
 		assert.Equal(t, mocks.MockProducts[1].Description, products[1].Description)
 		assert.Equal(t, mocks.MockProducts[1].Price, products[1].Price)
+		mockProductRepository.AssertExpectations(t)
 	})
 
 	t.Run("should return an empty list", func(t *testing.T) {
@@ -39,6 +40,7 @@ func TestGetAllProducts(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Empty(t, products)
+		mockProductRepository.AssertExpectations(t)
 	})
 
 	t.Run("should return an error", func(t *testing.T) {
@@ -49,6 +51,7 @@ func TestGetAllProducts(t *testing.T) {
 		_, err := productService.GetAllProducts()
 
 		assert.Error(t, err)
+		mockProductRepository.AssertExpectations(t)
 	})
 }
 
@@ -67,6 +70,7 @@ func TestCreateProducts(t *testing.T) {
 		assert.Equal(t, mocks.MockProducts[0].Title, product.Title)
 		assert.Equal(t, mocks.MockProducts[0].Description, product.Description)
 		assert.Equal(t, mocks.MockProducts[0].Price, product.Price)
+		mockProductRepository.AssertExpectations(t)
 	})
 
 	t.Run("should return an error", func(t *testing.T) {
@@ -77,6 +81,7 @@ func TestCreateProducts(t *testing.T) {
 		_, err := productService.CreateProduct(&mockCreateProduct)
 
 		assert.Error(t, err)
+		mockProductRepository.AssertExpectations(t)
 	})
 }
 
@@ -93,6 +98,7 @@ func TestGetProductByID(t *testing.T) {
 		assert.Equal(t, mocks.MockProducts[0].Title, product.Title)
 		assert.Equal(t, mocks.MockProducts[0].Description, product.Description)
 		assert.Equal(t, mocks.MockProducts[0].Price, product.Price)
+		mockProductRepository.AssertExpectations(t)
 	})
 
 	t.Run("should return an error", func(t *testing.T) {
@@ -103,6 +109,7 @@ func TestGetProductByID(t *testing.T) {
 		_, err := productService.GetProductByID(1)
 
 		assert.Error(t, err)
+		mockProductRepository.AssertExpectations(t)
 	})
 }
 
@@ -119,6 +126,7 @@ func TestUpdateProduct(t *testing.T) {
 		assert.Equal(t, mocks.MockProducts[0].Title, product.Title)
 		assert.Equal(t, mocks.MockProducts[0].Description, product.Description)
 		assert.Equal(t, mocks.MockProducts[0].Price, product.Price)
+		mockProductRepository.AssertExpectations(t)
 	})
 
 	t.Run("should return an error", func(t *testing.T) {
@@ -129,6 +137,7 @@ func TestUpdateProduct(t *testing.T) {
 		_, err := productService.UpdateProduct(mocks.MockProducts[0])
 
 		assert.Error(t, err)
+		mockProductRepository.AssertExpectations(t)
 	})
 }
 
@@ -141,6 +150,7 @@ func TestDeleteProduct(t *testing.T) {
 		err := productService.DeleteProduct(1)
 
 		assert.NoError(t, err)
+		mockProductRepository.AssertExpectations(t)
 	})
 
 	t.Run("should return an error", func(t *testing.T) {
@@ -151,5 +161,6 @@ func TestDeleteProduct(t *testing.T) {
 		err := productService.DeleteProduct(1)
 
 		assert.Error(t, err)
+		mockProductRepository.AssertExpectations(t)
 	})
 }

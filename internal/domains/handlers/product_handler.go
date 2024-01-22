@@ -34,6 +34,10 @@ func (h *ProductHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to decode product data")
 	}
 
+	if err = c.Validate(product); err != nil {
+		return err
+	}
+
 	createdProduct, err := h.productService.CreateProduct(&product)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create product")
@@ -55,7 +59,7 @@ func (h *ProductHandler) Show(c echo.Context) error {
 
 	product, err := h.productService.GetProductByID(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get product")
+		return echo.NewHTTPError(http.StatusNotFound, "Failed to get product")
 	}
 
 	return c.JSON(http.StatusOK, product)
@@ -80,12 +84,20 @@ func (h *ProductHandler) Update(c echo.Context) error {
 
 	product, err := h.productService.GetProductByID(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get product")
+		return echo.NewHTTPError(http.StatusNotFound, "Failed to get product")
 	}
 
-	product.Title = updateProduct.Title
-	product.Description = updateProduct.Description
-	product.Price = updateProduct.Price
+	if updateProduct.Title != "" {
+		product.Title = updateProduct.Title
+	}
+
+	if updateProduct.Description != "" {
+		product.Description = updateProduct.Description
+	}
+
+	if updateProduct.Price > 0 {
+		product.Price = updateProduct.Price
+	}
 
 	updatedProduct, err := h.productService.UpdateProduct(product)
 	if err != nil {
