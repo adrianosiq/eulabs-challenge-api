@@ -143,6 +143,45 @@ func TestGetByID(t *testing.T) {
 	})
 }
 
+func TestUpdate(t *testing.T) {
+	var mockUpdateProduct = &models.Product{
+		ID:          1,
+		Title:       "Charmander",
+		Description: "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.",
+		Price:       1093.45,
+	}
+
+	t.Run("should return the product", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "UPDATE `products` SET .+"
+		mock.ExpectBegin()
+		mock.ExpectExec(expectedSQL).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		productRepository := NewProductRepository(db)
+		product, err := productRepository.Update(mockUpdateProduct)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(1), product.ID)
+		assert.Equal(t, "Charmander", product.Title)
+		assert.Contains(t, product.Description, "It has a preference")
+		assert.Equal(t, 1093.45, product.Price)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		db, mock := NewMockDB()
+		expectedSQL := "UPDATE `products` SET .+"
+		mock.ExpectBegin()
+		mock.ExpectExec(expectedSQL).WillReturnError(fmt.Errorf("some error"))
+		mock.ExpectCommit()
+
+		productRepository := NewProductRepository(db)
+		_, err := productRepository.Update(mockUpdateProduct)
+
+		assert.Error(t, err)
+	})
+}
+
 func TestDelete(t *testing.T) {
 	t.Run("should return nil", func(t *testing.T) {
 		db, mock := NewMockDB()

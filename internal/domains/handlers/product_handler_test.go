@@ -38,6 +38,11 @@ func (m *MockProductService) DeleteProduct(id int) error {
 	return args.Error(0)
 }
 
+func (m *MockProductService) UpdateProduct(product *models.Product) (*models.Product, error) {
+	args := m.Called(product)
+	return args.Get(0).(*models.Product), args.Error(1)
+}
+
 var MockProducts = []*models.Product{
 	{
 		ID:          1,
@@ -143,6 +148,47 @@ func TestShow(t *testing.T) {
 			assert.Equal(t, "Bulbasaur", product.Title)
 			assert.Contains(t, product.Description, "There is a plant seed")
 			assert.Equal(t, 99.99, product.Price)
+		}
+	})
+}
+
+func TestUpdate(t *testing.T) {
+	var productJSON = `{"title":"Charmander","description":"It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.", "price": 1093.45}`
+	var updatedProduct = models.Product{
+		ID:          MockProducts[0].ID,
+		Title:       "Charmander",
+		Description: "It has a preference for hot things. When it rains, steam is said to spout from the tip of its tail.",
+		Price:       1093.45,
+		CreatedAt:   MockProducts[0].CreatedAt,
+		UpdatedAt:   MockProducts[0].UpdatedAt,
+		DeletedAt:   MockProducts[0].DeletedAt,
+	}
+
+	t.Run("should returns 200", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/", strings.NewReader(productJSON))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/products/:id")
+		c.SetParamNames("id")
+		c.SetParamValues("1")
+
+		mockProductService := &MockProductService{}
+		mockProductService.On("GetProductByID", 1).Return(MockProducts[0], nil)
+		mockProductService.On("UpdateProduct", &updatedProduct).Return(&updatedProduct, nil)
+		productHandler := NewProductHandler(mockProductService)
+
+		if assert.NoError(t, productHandler.Update(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			var product models.Product
+			json.Unmarshal(rec.Body.Bytes(), &product)
+
+			assert.Equal(t, updatedProduct.ID, product.ID)
+			assert.Equal(t, updatedProduct.Title, product.Title)
+			assert.Equal(t, updatedProduct.Description, product.Description)
+			assert.Equal(t, updatedProduct.Price, product.Price)
 		}
 	})
 }

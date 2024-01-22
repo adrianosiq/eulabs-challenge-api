@@ -38,6 +38,14 @@ func (m *MockProductRepository) GetByID(id int) (*models.Product, error) {
 	return args.Get(0).(*models.Product), args.Error(1)
 }
 
+func (m *MockProductRepository) Update(product *models.Product) (*models.Product, error) {
+	args := m.Called(product)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Product), args.Error(1)
+}
+
 func (m *MockProductRepository) Delete(id int) error {
 	args := m.Called(id)
 	return args.Error(0)
@@ -126,7 +134,7 @@ func TestCreateProducts(t *testing.T) {
 }
 
 func TestGetProductByID(t *testing.T) {
-	t.Run("should return the products", func(t *testing.T) {
+	t.Run("should return the product", func(t *testing.T) {
 		mockProductRepository := &MockProductRepository{}
 		mockProductRepository.On("GetByID", 1).Return(MockProducts[0], nil)
 
@@ -151,7 +159,33 @@ func TestGetProductByID(t *testing.T) {
 	})
 }
 
-func TestDelete(t *testing.T) {
+func TestUpdateProduct(t *testing.T) {
+	t.Run("should return the product", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("Update", MockProducts[0]).Return(MockProducts[0], nil)
+
+		productService := NewProductService(mockProductRepository)
+		product, err := productService.UpdateProduct(MockProducts[0])
+
+		assert.NoError(t, err)
+		assert.Equal(t, MockProducts[0].ID, product.ID)
+		assert.Equal(t, MockProducts[0].Title, product.Title)
+		assert.Equal(t, MockProducts[0].Description, product.Description)
+		assert.Equal(t, MockProducts[0].Price, product.Price)
+	})
+
+	t.Run("should return an error", func(t *testing.T) {
+		mockProductRepository := &MockProductRepository{}
+		mockProductRepository.On("Update", MockProducts[0]).Return(nil, fmt.Errorf("some error"))
+
+		productService := NewProductService(mockProductRepository)
+		_, err := productService.UpdateProduct(MockProducts[0])
+
+		assert.Error(t, err)
+	})
+}
+
+func TestDeleteProduct(t *testing.T) {
 	t.Run("should return nil", func(t *testing.T) {
 		mockProductRepository := &MockProductRepository{}
 		mockProductRepository.On("Delete", 1).Return(nil)
