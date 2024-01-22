@@ -39,6 +39,14 @@ func (r *ProductRepository) GetByID(id int) (*models.Product, error) {
 	return &product, nil
 }
 
+func (r *ProductRepository) Update(product *models.Product) (*models.Product, error) {
+	err := r.db.Save(&product).Error
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+
 func (r *ProductRepository) Delete(id int) error {
 	var product models.Product
 	err := r.db.Where("id = ?", id).Delete(&product).Error
