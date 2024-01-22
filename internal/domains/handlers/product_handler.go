@@ -67,6 +67,40 @@ func (h *ProductHandler) Show(c echo.Context) error {
 	return c.JSON(http.StatusOK, product)
 }
 
+func (h *ProductHandler) Update(c echo.Context) error {
+	idParam := c.Param("id")
+	if idParam == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing product ID")
+	}
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid product ID")
+	}
+
+	var updateProduct models.Product
+	err = c.Bind(&updateProduct)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to decode product data")
+	}
+
+	product, err := h.productService.GetProductByID(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get product")
+	}
+
+	product.Title = updateProduct.Title
+	product.Description = updateProduct.Description
+	product.Price = updateProduct.Price
+
+	updatedProduct, err := h.productService.UpdateProduct(product)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update product")
+	}
+
+	return c.JSON(http.StatusOK, updatedProduct)
+}
+
 func (h *ProductHandler) Delete(c echo.Context) error {
 	idParam := c.Param("id")
 	if idParam == "" {
